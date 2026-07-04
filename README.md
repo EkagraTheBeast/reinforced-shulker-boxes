@@ -2,7 +2,6 @@
 
 [![Mod Loader: Fabric](https://img.shields.io/static/v1?label=modloader&message=fabric&color=brightgreen)](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 ![Mod Environment](https://img.shields.io/static/v1?label=environment&message=client%2Fserver&color=yellow)
-![Version](https://cf.way2muchnoise.eu/versions/529874.svg)
 [![Modrinth](https://img.shields.io/modrinth/dt/xlOwuSdN?color=%2300AF5C&logo=modrinth)](https://modrinth.com/mod/reinforced-shulker-boxes-port-26.2)
 [![MIT License](https://img.shields.io/static/v1?label=licence&message=MIT&color=blue)](./LICENSE)
 
@@ -15,6 +14,7 @@ The Reinforced Shulker Boxes mod adds reinforced shulker boxes.
 ## Reinforced Storage Mod Series
 
 - [Reinforced Chests](https://github.com/Aton-Kish/reinforced-chests)
+- [Reinforced Shulkers Original](https://modrinth.com/mod/reinforced-shulker-boxes)
 - [Reinforced Barrels](https://github.com/Aton-Kish/reinforced-barrels)
 
 ## Recipe
