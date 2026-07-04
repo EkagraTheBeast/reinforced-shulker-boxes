@@ -3,8 +3,7 @@
 [![Mod Loader: Fabric](https://img.shields.io/static/v1?label=modloader&message=fabric&color=brightgreen)](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 ![Mod Environment](https://img.shields.io/static/v1?label=environment&message=client%2Fserver&color=yellow)
 ![Version](https://cf.way2muchnoise.eu/versions/529874.svg)
-[![CurseForge](https://cf.way2muchnoise.eu/529874.svg)](https://www.curseforge.com/minecraft/mc-mods/reinforced-shulker-boxes)
-[![Modrinth](https://img.shields.io/modrinth/dt/xlOwuSdN?color=%2300AF5C&logo=modrinth)](https://modrinth.com/mod/reinforced-shulker-boxes)
+[![Modrinth](https://img.shields.io/modrinth/dt/xlOwuSdN?color=%2300AF5C&logo=modrinth)](https://modrinth.com/mod/reinforced-shulker-boxes-port-26.2)
 [![MIT License](https://img.shields.io/static/v1?label=licence&message=MIT&color=blue)](./LICENSE)
 
 # Reinforced Shulker Boxes
