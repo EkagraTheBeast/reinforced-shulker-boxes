@@ -17,7 +17,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
-import atonkish.reinfchest.ReinforcedChestsMod;
 import atonkish.reinfcore.ReinforcedCoreConfig;
 import atonkish.reinfcore.ReinforcedCoreMod;
 import atonkish.reinfcore.api.ReinforcedCoreModInitializer;
@@ -42,7 +41,7 @@ public class ReinforcedShulkerBoxesMod implements ModInitializer, ReinforcedCore
 
   @Override
   public void onInitialize() {
-    IS_REINFCHEST_LOADED = FabricLoader.getInstance().isModLoaded(ReinforcedChestsMod.MOD_ID);
+    IS_REINFCHEST_LOADED = FabricLoader.getInstance().isModLoaded("reinfchest");
     initialize();
   }
 

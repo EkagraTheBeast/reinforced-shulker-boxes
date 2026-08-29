@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -18,10 +19,12 @@ import org.jetbrains.annotations.Nullable;
 
 import atonkish.reinfcore.screen.ReinforcedStorageScreenHandler;
 import atonkish.reinfcore.util.ReinforcingMaterial;
+import atonkish.reinfshulker.block.ReinforcedShulkerBoxBlock;
 import atonkish.reinfshulker.mixin.BlockEntityAccessor;
 
 public class ReinforcedShulkerBoxBlockEntity extends ShulkerBoxBlockEntity {
   private final ReinforcingMaterial cachedMaterial;
+  private final @Nullable DyeColor cachedColor;
 
   public ReinforcedShulkerBoxBlockEntity(
       ReinforcingMaterial material, @Nullable DyeColor color, BlockPos pos, BlockState state) {
@@ -30,22 +33,34 @@ public class ReinforcedShulkerBoxBlockEntity extends ShulkerBoxBlockEntity {
         .setType(ModBlockEntityType.REINFORCED_SHULKER_BOX_MAP.get(material));
     this.setItems(NonNullList.withSize(material.getSize(), ItemStack.EMPTY));
     this.cachedMaterial = material;
+    this.cachedColor = color;
   }
 
   public ReinforcedShulkerBoxBlockEntity(
       ReinforcingMaterial material, BlockPos pos, BlockState state) {
-    super(pos, state);
-    ((BlockEntityAccessor) this)
-        .setType(ModBlockEntityType.REINFORCED_SHULKER_BOX_MAP.get(material));
-    this.setItems(NonNullList.withSize(material.getSize(), ItemStack.EMPTY));
-    this.cachedMaterial = material;
+    this(material, getColorFromBlockState(state), pos, state);
+  }
+
+  private static @Nullable DyeColor getColorFromBlockState(BlockState state) {
+    Block block = state.getBlock();
+
+    if (block instanceof ReinforcedShulkerBoxBlock reinforcedShulkerBoxBlock) {
+      return reinforcedShulkerBoxBlock.getColor();
+    }
+
+    return null;
   }
 
   @Override
   protected Component getDefaultName() {
     String namespace = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(this.getType()).getNamespace();
-    return Component.translatable(
-        "container." + namespace + "." + this.cachedMaterial.getName() + "ShulkerBox");
+    String name = this.cachedMaterial.getName() + "_shulker_box";
+
+    if (this.cachedColor != null) {
+      name = this.cachedColor.getName() + "_" + name;
+    }
+
+    return Component.translatable("block." + namespace + "." + name);
   }
 
   @Override

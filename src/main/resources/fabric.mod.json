@@ -27,6 +27,7 @@
     "suggests":  {
                      "modmenu":  "*",
                      "reinfchest":  "*",
+                     "ironchest":  "*",
                      "quickshulker":  "*",
                      "shulkerboxtooltip":  "*"
                  },

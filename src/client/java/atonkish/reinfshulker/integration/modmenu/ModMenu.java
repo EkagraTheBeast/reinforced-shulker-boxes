@@ -45,7 +45,7 @@ public class ModMenu implements ModMenuApi {
                 Component.translatable("text.autoconfig.reinfcore.option.screenType"),
                 ReinforcedStorageScreenType.class,
                 ReinforcedCoreMod.CONFIG.screenType)
-            .setDefaultValue(ReinforcedStorageScreenType.SCROLL)
+            .setDefaultValue(ReinforcedStorageScreenType.SINGLE)
             .setSaveConsumer(value -> ReinforcedCoreMod.CONFIG.screenType = value)
             .build());
 

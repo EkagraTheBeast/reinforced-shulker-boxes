@@ -89,48 +89,36 @@ sourceSets {
 }
 
 dependencies {
-	def appData = System.getenv("APPDATA")
-	if (appData != null) {
-		def prismModsDir = file(appData + "/PrismLauncher/instances/Server new modded/minecraft/mods")
-		if (prismModsDir.exists()) {
-			compileOnly fileTree(dir: prismModsDir, include: ["modmenu-*.jar", "cloth-config-*.jar", "shulkerboxtooltip-*.jar"])
-		}
-	}
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+def appData = System.getenv("APPDATA")
+if (appData != null) {
+def prismModsDir = file(appData + "/PrismLauncher/instances/Server new modded/minecraft/mods")
+if (prismModsDir.exists()) {
+compileOnly fileTree(dir: prismModsDir, include: ["modmenu-*.jar", "cloth-config-*.jar", "shulkerboxtooltip-*.jar"])
+}
+}
 
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+// To change the versions see the gradle.properties file
+minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	compileOnly files(
-		".gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-group-api-v1-4abd26ae-common/4.2.36+4fc5413f3e/fabric-item-group-api-v1-4abd26ae-common-4.2.36+4fc5413f3e.jar"
-	)
-	clientCompileOnly files(
-		".gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-v1-4abd26ae-client/16.2.9+7edacff13e/fabric-rendering-v1-4abd26ae-client-16.2.9+7edacff13e.jar"
-	)
+implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Reinforced Core
-	implementation files(
-		".gradle/loom-cache/remapped_mods/remapped/atonkish/reinfcore/reinforced-core-4abd26ae-common/${project.reinforced_core_version}/reinforced-core-4abd26ae-common-${project.reinforced_core_version}.jar"
-	)
-	clientImplementation files(
-		".gradle/loom-cache/remapped_mods/remapped/atonkish/reinfcore/reinforced-core-4abd26ae-client/${project.reinforced_core_version}/reinforced-core-4abd26ae-client-${project.reinforced_core_version}.jar"
-	)
-	// Reinforced Chests
-	compileOnly files(
-		".gradle/loom-cache/remapped_mods/remapped/atonkish/reinfchest/reinforced-chests-4abd26ae-common/${project.reinforced_chests_version}/reinforced-chests-4abd26ae-common-${project.reinforced_chests_version}.jar"
-	)
+// Fabric API
+implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// Shulker Box Tooltip
-	compileOnly("com.misterpemodder:shulkerboxtooltip-fabric:${project.shulker_box_tooltip_version}") {
-		transitive = false
-	}
+compileOnly files(
+".gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-group-api-v1-4abd26ae-common/4.2.36+4fc5413f3e/fabric-item-group-api-v1-4abd26ae-common-4.2.36+4fc5413f3e.jar"
+)
+clientCompileOnly files(
+".gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-v1-4abd26ae-client/16.2.9+7edacff13e/fabric-rendering-v1-4abd26ae-client-16.2.9+7edacff13e.jar"
+)
 
-	// // Quick Shulker
-	// modImplementation "net.kyrptonaught:quickshulker:${project.quick_shulker_version}"
-	// // Quick Shulker deps
-	// modImplementation "net.kyrptonaught:shulkerutils:${project.shulkerutils_version}"
+// Reinforced Core is vendored locally under src/main/java/atonkish/reinfcore.
+// Reinforced Chests is optional and checked by mod id string only.
+
+// Shulker Box Tooltip
+compileOnly("com.misterpemodder:shulkerboxtooltip-fabric:${project.shulker_box_tooltip_version}") {
+transitive = false
+}
 }
 
 processResources {
@@ -157,15 +145,9 @@ java {
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
-	}
-	from(zipTree(".gradle/loom-cache/remapped_mods/remapped/atonkish/reinfcore/reinforced-core-4abd26ae-common/${project.reinforced_core_version}/reinforced-core-4abd26ae-common-${project.reinforced_core_version}.jar")) {
-		exclude "fabric.mod.json", "META-INF/**", "LICENSE*", "NOTICE*"
-	}
-	from(zipTree(".gradle/loom-cache/remapped_mods/remapped/atonkish/reinfcore/reinforced-core-4abd26ae-client/${project.reinforced_core_version}/reinforced-core-4abd26ae-client-${project.reinforced_core_version}.jar")) {
-		exclude "fabric.mod.json", "META-INF/**", "LICENSE*", "NOTICE*"
-	}
+from("LICENSE") {
+rename { "${it}_${inputs.properties.archivesName}"}
+}
 }
 
 // configure the maven publication

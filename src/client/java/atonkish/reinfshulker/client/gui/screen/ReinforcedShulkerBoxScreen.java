@@ -2,6 +2,7 @@ package atonkish.reinfshulker.client.gui.screen;
 
 import java.lang.reflect.Field;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -24,10 +25,12 @@ public class ReinforcedShulkerBoxScreen
   private static final int PLAYER_INVENTORY_HEIGHT = 76;
   private static final int HOTBAR_GAP = 4;
 
-  private static final int VANILLA_PANEL_WIDTH = 176;
   private static final int LEFT_INSET = 7;
   private static final int RIGHT_INSET = 7;
+  private static final int SCREEN_MARGIN = 8;
 
+  private static final int SCROLL_COLUMNS = 9;
+  private static final int LOW_RES_MAX_SCROLL_ROWS = 6;
   private static final int SCROLLBAR_GAP = 4;
   private static final int SCROLLBAR_WIDTH = 12;
   private static final int SCROLLER_HEIGHT = 15;
@@ -45,11 +48,11 @@ public class ReinforcedShulkerBoxScreen
 
   public ReinforcedShulkerBoxScreen(
       ReinforcedStorageScreenHandler menu, Inventory inventory, Component title) {
-    super(menu, inventory, title, getImageWidth(menu), getImageHeight(menu.getRows()));
+    super(menu, inventory, title, getImageWidth(menu), getImageHeight(getVisibleRows(menu)));
 
     this.containerRows = getVisibleRows(menu);
-    this.containerColumns = menu.getColumns();
-    this.playerInventoryX = getPlayerInventoryX(this.containerColumns);
+    this.containerColumns = getLayoutColumns(menu);
+    this.playerInventoryX = getPlayerInventoryX(this.containerColumns, this.imageWidth);
     this.playerInventoryY = getPlayerInventoryY(this.containerRows);
 
     this.titleLabelX = LEFT_INSET + 1;
@@ -62,7 +65,7 @@ public class ReinforcedShulkerBoxScreen
   }
 
   private static int getImageWidth(ReinforcedStorageScreenHandler menu) {
-    int columns = getColumns(menu);
+    int columns = getLayoutColumns(menu);
     return CONTAINER_SLOT_BG_X * 2
         + columns * SLOT_SIZE
         + (shouldUseScrollbar(menu) ? SCROLLBAR_WIDTH : 0);
@@ -76,14 +79,14 @@ public class ReinforcedShulkerBoxScreen
         + RIGHT_INSET;
   }
 
-  private static int getContainerSlotBgX(int columns) {
-    return LEFT_INSET + (Math.max(9, columns) - columns) * SLOT_SIZE / 2;
-  }
+  private static int getPlayerInventoryX(int columns, int imageWidth) {
+    int playerWidth = SCROLL_COLUMNS * SLOT_SIZE;
 
-  private static int getPlayerInventoryX(int columns) {
-    int chestWidth = columns * SLOT_SIZE;
-    int playerWidth = 9 * SLOT_SIZE;
-    return getContainerSlotBgX(columns) + (chestWidth - playerWidth) / 2;
+    if (columns == SCROLL_COLUMNS) {
+      return CONTAINER_SLOT_BG_X + (SCROLL_COLUMNS * SLOT_SIZE - playerWidth) / 2;
+    }
+
+    return Math.max(CONTAINER_SLOT_BG_X, (imageWidth - playerWidth) / 2);
   }
 
   private static int getPlayerInventoryY(int rows) {
@@ -106,8 +109,8 @@ public class ReinforcedShulkerBoxScreen
     int y = this.topPos;
 
     drawPanelBackground(graphics, x, y);
-    drawContainerSlots(graphics, x, y);
-    drawPlayerSlots(graphics, x, y);
+    drawContainerSlots(graphics);
+    drawPlayerSlots(graphics);
 
     if (this.hasScrollbar()) {
       drawScrollbar(graphics, x, y);
@@ -115,11 +118,11 @@ public class ReinforcedShulkerBoxScreen
   }
 
   private void drawPanelBackground(GuiGraphicsExtractor graphics, int x, int y) {
-    graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFFC6C6C6);
-    graphics.outline(x, y, this.imageWidth, this.imageHeight, 0xFF404040);
+    graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFF555555);
+    graphics.outline(x, y, this.imageWidth, this.imageHeight, 0xFF202020);
   }
 
-  private void drawContainerSlots(GuiGraphicsExtractor graphics, int x, int y) {
+  private void drawContainerSlots(GuiGraphicsExtractor graphics) {
     int containerSlots = this.menu.getInventory().getContainerSize();
 
     for (int index = 0; index < containerSlots && index < this.menu.slots.size(); index++) {
@@ -133,7 +136,7 @@ public class ReinforcedShulkerBoxScreen
     }
   }
 
-  private void drawPlayerSlots(GuiGraphicsExtractor graphics, int x, int y) {
+  private void drawPlayerSlots(GuiGraphicsExtractor graphics) {
     int containerSlots = this.menu.getInventory().getContainerSize();
 
     for (int index = containerSlots; index < this.menu.slots.size(); index++) {
@@ -164,7 +167,7 @@ public class ReinforcedShulkerBoxScreen
   }
 
   private int getScrollbarX() {
-    return this.leftPos + LEFT_INSET + this.containerColumns * SLOT_SIZE + SCROLLBAR_GAP + 1;
+    return this.leftPos + CONTAINER_SLOT_BG_X + this.containerColumns * SLOT_SIZE + SCROLLBAR_GAP;
   }
 
   private boolean hasScrollbar() {
@@ -180,17 +183,13 @@ public class ReinforcedShulkerBoxScreen
   }
 
   private int getHiddenRows() {
-    int totalRows = (int) Math.ceil(this.menu.getInventory().getContainerSize() / 9.0D);
+    int totalRows = getTotalRows(this.menu);
     return Math.max(1, totalRows - this.containerRows);
   }
 
   private void setScrollPosition(float position) {
     this.scrollPosition = Math.max(0.0F, Math.min(position, 1.0F));
     scrollContainerSlots();
-  }
-
-  private static float clamp(float value, float min, float max) {
-    return Math.max(min, Math.min(max, value));
   }
 
   @Override
@@ -253,93 +252,139 @@ public class ReinforcedShulkerBoxScreen
         256);
   }
 
-  private static int getColumns(ReinforcedStorageScreenHandler menu) {
-    return Math.max(9, menu.getColumns());
+  private static int getFullColumns(ReinforcedStorageScreenHandler menu) {
+    return Math.max(SCROLL_COLUMNS, menu.getColumns());
+  }
+
+  private static int getLayoutColumns(ReinforcedStorageScreenHandler menu) {
+    return shouldForceScrollLayout(menu) ? SCROLL_COLUMNS : getFullColumns(menu);
+  }
+
+  private static boolean shouldForceScrollLayout(ReinforcedStorageScreenHandler menu) {
+    return ReinforcedCoreMod.CONFIG.screenType == ReinforcedStorageScreenType.SCROLL
+        || isFullLayoutTooLarge(menu);
+  }
+
+  private static boolean isFullLayoutTooLarge(ReinforcedStorageScreenHandler menu) {
+    int fullColumns = getFullColumns(menu);
+    int fullRows = getRows(menu, fullColumns);
+    int fullWidth = CONTAINER_SLOT_BG_X * 2 + fullColumns * SLOT_SIZE;
+    int fullHeight = getImageHeight(fullRows);
+
+    Minecraft minecraft = Minecraft.getInstance();
+    int maxWidth = minecraft.getWindow().getGuiScaledWidth() - SCREEN_MARGIN;
+    int maxHeight = minecraft.getWindow().getGuiScaledHeight() - SCREEN_MARGIN;
+
+    return fullWidth > maxWidth || fullHeight > maxHeight;
   }
 
   private static int getTotalRows(ReinforcedStorageScreenHandler menu) {
-    return (int) Math.ceil(menu.getInventory().getContainerSize() / (double) getColumns(menu));
+    return getRows(menu, getLayoutColumns(menu));
+  }
+
+  private static int getRows(ReinforcedStorageScreenHandler menu, int columns) {
+    return (int) Math.ceil(menu.getInventory().getContainerSize() / (double) columns);
   }
 
   private static int getVisibleRows(ReinforcedStorageScreenHandler menu) {
     int totalRows = getTotalRows(menu);
 
-    if (ReinforcedCoreMod.CONFIG.screenType == ReinforcedStorageScreenType.SINGLE) {
+    if (!shouldForceScrollLayout(menu)) {
       return totalRows;
     }
 
     int configuredRows = ReinforcedCoreMod.CONFIG.scrollScreen.rows;
-    configuredRows = Math.max(1, Math.min(configuredRows, totalRows));
-    return configuredRows;
+    int visibleRows = Math.max(1, Math.min(configuredRows, totalRows));
+    visibleRows = Math.min(visibleRows, getMaxRowsThatFit(totalRows));
+
+    if (isFullLayoutTooLarge(menu)) {
+      visibleRows = Math.min(visibleRows, LOW_RES_MAX_SCROLL_ROWS);
+    }
+
+    return Math.max(1, visibleRows);
+  }
+
+  private static int getMaxRowsThatFit(int totalRows) {
+    Minecraft minecraft = Minecraft.getInstance();
+    int availableHeight =
+        minecraft.getWindow().getGuiScaledHeight()
+            - SCREEN_MARGIN * 2
+            - CONTAINER_SLOT_BG_Y
+            - PLAYER_INVENTORY_GAP
+            - PLAYER_INVENTORY_HEIGHT
+            - RIGHT_INSET;
+
+    int rows = availableHeight / SLOT_SIZE;
+    return Math.max(1, Math.min(rows, totalRows));
   }
 
   private static boolean shouldUseScrollbar(ReinforcedStorageScreenHandler menu) {
-    return ReinforcedCoreMod.CONFIG.screenType == ReinforcedStorageScreenType.SCROLL
-        && getTotalRows(menu) > getVisibleRows(menu);
+    return getTotalRows(menu) > getVisibleRows(menu);
   }
 
   private void scrollContainerSlots() {
     int totalSlots = this.menu.getInventory().getContainerSize();
-    int columns = getColumns(this.menu);
-    int totalRows = getTotalRows(this.menu);
-    int hiddenRows = Math.max(0, totalRows - this.containerRows);
-    int rowOffset =
-        shouldUseScrollbar(this.menu) ? Math.round(this.scrollPosition * hiddenRows) : 0;
+    int hiddenRows = Math.max(0, getTotalRows(this.menu) - this.containerRows);
+    int rowOffset = this.hasScrollbar() ? Math.round(this.scrollPosition * hiddenRows) : 0;
 
     for (int slotIndex = 0;
         slotIndex < totalSlots && slotIndex < this.menu.slots.size();
         slotIndex++) {
-      Slot slot = this.menu.slots.get(slotIndex);
-
-      int row = slotIndex / columns;
-      int column = slotIndex % columns;
-      int visibleRow = row - rowOffset;
-
-      int x = CONTAINER_SLOT_BG_X + column * SLOT_SIZE;
-      int y =
-          visibleRow >= 0 && visibleRow < this.containerRows
-              ? CONTAINER_SLOT_BG_Y + visibleRow * SLOT_SIZE
-              : -2000;
-
-      setSlotPosition(slot, x, y);
+      moveContainerSlot(slotIndex, rowOffset);
     }
 
     movePlayerInventorySlots(totalSlots);
   }
 
-  private void updatePlayerInventoryLayout() {
-    this.playerInventoryX = Math.max(CONTAINER_SLOT_BG_X, (this.imageWidth - 9 * SLOT_SIZE) / 2);
+  private void moveContainerSlot(int slotIndex, int rowOffset) {
+    Slot slot = this.menu.slots.get(slotIndex);
+    int row = slotIndex / this.containerColumns;
+    int column = slotIndex % this.containerColumns;
+    int visibleRow = row - rowOffset;
 
+    int x = CONTAINER_SLOT_BG_X + column * SLOT_SIZE;
+    int y =
+        visibleRow >= 0 && visibleRow < this.containerRows
+            ? CONTAINER_SLOT_BG_Y + visibleRow * SLOT_SIZE
+            : -2000;
+
+    setSlotPosition(slot, x, y);
+  }
+
+  private void updatePlayerInventoryLayout() {
+    this.playerInventoryX = getPlayerInventoryX(this.containerColumns, this.imageWidth);
     this.playerInventoryY = this.imageHeight - (3 * SLOT_SIZE + HOTBAR_GAP + SLOT_SIZE) - 8;
 
-    this.inventoryLabelX = this.playerInventoryX;
-    this.inventoryLabelY = this.playerInventoryY - 10;
+    this.inventoryLabelX = this.playerInventoryX + 1;
+    this.inventoryLabelY = this.playerInventoryY - 11;
   }
 
   private void movePlayerInventorySlots(int firstPlayerSlotIndex) {
-    int playerInventoryY = this.playerInventoryY;
-    int playerInventoryX = this.playerInventoryX;
-
     for (int row = 0; row < 3; row++) {
-      for (int column = 0; column < 9; column++) {
-        int index = firstPlayerSlotIndex + row * 9 + column;
+      for (int column = 0; column < SCROLL_COLUMNS; column++) {
+        int index = firstPlayerSlotIndex + row * SCROLL_COLUMNS + column;
 
         if (index < this.menu.slots.size()) {
           setSlotPosition(
               this.menu.slots.get(index),
-              playerInventoryX + column * SLOT_SIZE,
-              playerInventoryY + row * SLOT_SIZE);
+              this.playerInventoryX + column * SLOT_SIZE,
+              this.playerInventoryY + row * SLOT_SIZE);
         }
       }
     }
 
-    int hotbarY = playerInventoryY + 3 * SLOT_SIZE + HOTBAR_GAP;
+    moveHotbarSlots(firstPlayerSlotIndex);
+  }
 
-    for (int column = 0; column < 9; column++) {
+  private void moveHotbarSlots(int firstPlayerSlotIndex) {
+    int hotbarY = this.playerInventoryY + 3 * SLOT_SIZE + HOTBAR_GAP;
+
+    for (int column = 0; column < SCROLL_COLUMNS; column++) {
       int index = firstPlayerSlotIndex + 27 + column;
 
       if (index < this.menu.slots.size()) {
-        setSlotPosition(this.menu.slots.get(index), playerInventoryX + column * SLOT_SIZE, hotbarY);
+        setSlotPosition(
+            this.menu.slots.get(index), this.playerInventoryX + column * SLOT_SIZE, hotbarY);
       }
     }
   }
